@@ -1,0 +1,23 @@
+{
+  "summary": "Full end-to-end frontend flow tested against public URL. All 16 UI checks PASSED: homepage brand & hero, main-input/level-select/ingest-btn state, text ingestion (Italian fotosintesi, level=superiori) navigated to /aula/{sid} in <90s, lesson-title, chapter-0..2 in sidebar, streaming intro finished and Hai-Capito bar appeared, tab-mappa (SVG mind map rendered), tab-quiz generated with Multipla/V-F/Aperte/Flash tabs, tab-feynman UI + submit produced score (75/100 shown), tab-note save shows note, chat send-btn produced tutor response, Dashboard shows stat-0..3, new-lesson-btn and 5 recent sessions, brand-link returns to home.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Classroom.jsx is ~440 lines and could be split (chat pane / right tabs) for maintainability, but not blocking.",
+    "startLessonIntro uses introStartedRef; StrictMode is disabled in index.js which is documented — consider a server-side idempotency guard as an extra safeguard for future StrictMode re-enable."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100% (16/16)"},
+  "test_credentials": "N/A (no auth in app)",
+  "seed_data_creation": "One session created via ingestion (topic: 'La fotosintesi clorofilliana'), plus a saved note and a Feynman submission. Left in DB as test data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Public URL https://study-tutor-13.preview.emergentagent.com works end-to-end. LLM calls (ingest, chat, quiz, feynman) complete within ~30-60s each. Use wait_for_selector on brand-link (avoid networkidle — marquee animation prevents idle). Dashboard already has 5+ recent sessions from prior test runs.",
+  "rca of the issue": "N/A — no bugs found."
+}
