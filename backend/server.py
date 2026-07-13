@@ -8,13 +8,14 @@ from pathlib import Path
 from typing import Optional, List
 
 from fastapi import FastAPI, APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 
 from content_extractor import extract_from_url, extract_from_file
+from exporter import export_session, FORMAT_CONFIG
 from ai_service import (
     analyze_content,
     generate_lesson_intro,
@@ -424,6 +425,28 @@ async def dashboard():
         "understood_topics": list(set(understood_topics))[:10],
         "recent_sessions": recent[:10],
     }
+
+
+@api_router.get("/export/{sid}/{fmt}")
+async def export_lesson(sid: str, fmt: str):
+    """Esporta la sessione nel formato richiesto: txt, md, json, docx, pdf."""
+    if fmt not in FORMAT_CONFIG:
+        raise HTTPException(400, f"Formato non supportato. Disponibili: {', '.join(FORMAT_CONFIG)}")
+    session = await _get_session(sid)
+    try:
+        data, ct, filename = export_session(session, fmt)
+    except Exception as e:
+        logger.exception("export failed")
+        raise HTTPException(500, f"Errore export: {e}")
+    from urllib.parse import quote
+    return Response(
+        content=data,
+        media_type=ct,
+        headers={
+            "Content-Disposition": f'attachment; filename="{quote(filename)}"; filename*=UTF-8\'\'{quote(filename)}',
+            "Cache-Control": "no-store",
+        },
+    )
 
 
 app.include_router(api_router)

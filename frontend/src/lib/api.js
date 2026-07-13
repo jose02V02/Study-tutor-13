@@ -104,6 +104,36 @@ export async function addNote(session_id, text) {
   }
 }
 
+export function exportUrl(sid, fmt) {
+  return `${API_BASE}/export/${sid}/${fmt}`;
+}
+
+export async function downloadExport(sid, fmt) {
+  const r = await fetch(exportUrl(sid, fmt));
+  if (!r.ok) {
+    let msg = "Export fallito";
+    try {
+      const j = await r.json();
+      msg = j.detail || msg;
+    } catch { /* ignore */ }
+    throw new Error(msg);
+  }
+  const blob = await r.blob();
+  // Extract filename from Content-Disposition
+  const cd = r.headers.get("content-disposition") || "";
+  let filename = `lezione.${fmt}`;
+  const m = cd.match(/filename\*=UTF-8''([^;]+)/) || cd.match(/filename="([^"]+)"/);
+  if (m) filename = decodeURIComponent(m[1]);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export async function getDashboard() {
   try {
     const r = await fetch(`${API_BASE}/dashboard`);

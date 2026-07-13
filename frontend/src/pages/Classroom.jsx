@@ -17,6 +17,7 @@ import QuizPanel from "@/components/QuizPanel";
 import FeynmanPanel from "@/components/FeynmanPanel";
 import StudyPlanPanel from "@/components/StudyPlanPanel";
 import HaiCapitoBar from "@/components/HaiCapitoBar";
+import ExportMenu from "@/components/ExportMenu";
 
 const RIGHT_TABS = [
   { key: "mappa", label: "Mappa", icon: MapIcon },
@@ -229,9 +230,13 @@ export default function Classroom() {
             </div>
           </div>
         </div>
-        <div className="hidden md:flex items-center gap-6 text-xs font-mono uppercase tracking-widest text-slate-600">
+        <div className="hidden md:flex items-center gap-4 text-xs font-mono uppercase tracking-widest text-slate-600">
           <span>Cap. <span className="text-emerald-900 font-semibold">{activeChapter + 1}</span>/{analysis.chapters?.length || 0}</span>
           <span>Compr. <span className="text-emerald-900 font-semibold">{session.progress?.comprehension || 0}%</span></span>
+          <ExportMenu sid={sid} />
+        </div>
+        <div className="md:hidden">
+          <ExportMenu sid={sid} />
         </div>
       </div>
 
