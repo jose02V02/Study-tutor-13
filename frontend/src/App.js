@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import Home from "@/pages/Home";
 import Classroom from "@/pages/Classroom";
 import Dashboard from "@/pages/Dashboard";
+import InstallPrompt from "@/components/InstallPrompt";
 import { GraduationCap, LayoutDashboard, Sparkles } from "lucide-react";
 
 function TopBar() {
@@ -83,6 +84,7 @@ export default function App() {
             style: { background: "#FDFBF7", color: "#0F172A", border: "1px solid rgba(15,23,42,0.12)" },
           }}
         />
+        <InstallPrompt />
       </BrowserRouter>
     </div>
   );
