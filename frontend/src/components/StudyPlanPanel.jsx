@@ -1,11 +1,24 @@
 import { Loader2, Timer, TrendingUp, Sparkles, RotateCcw } from "lucide-react";
 
-export default function StudyPlanPanel({ plan }) {
+export default function StudyPlanPanel({ plan, progress = 0 }) {
   if (!plan) {
     return (
       <div className="flex flex-col items-center py-12 text-center">
         <Loader2 className="animate-spin text-emerald-900 mb-3" />
         <div className="text-xs text-slate-500 font-mono uppercase tracking-widest">Preparazione piano…</div>
+        {progress > 0 && (
+          <>
+            <div className="mt-4 w-full bg-emerald-900/5 rounded-full h-1 overflow-hidden">
+              <div
+                className="h-full bg-emerald-800 transition-all duration-200"
+                style={{ width: `${Math.min(100, (progress / 1000) * 100)}%` }}
+              />
+            </div>
+            <div className="text-[10px] font-mono text-emerald-800/70 mt-2">
+              {progress} caratteri
+            </div>
+          </>
+        )}
       </div>
     );
   }

@@ -121,8 +121,21 @@ Rispondi come tutor esperto. Se l'utente dice che non ha capito, CAMBIA metodo: 
             break
 
 
-async def generate_quiz(api_key: str, analysis: dict, level: str) -> dict:
-    """Genera un quiz completo."""
+async def _stream_json(api_key: str, session_id: str, system: str, prompt: str) -> AsyncGenerator[tuple, None]:
+    """Yields ('delta', chunk) events then a final ('result', parsed_dict) event."""
+    chat = _new_chat(api_key, session_id, system)
+    text = ""
+    async for ev in chat.stream_message(UserMessage(text=prompt)):
+        if isinstance(ev, TextDelta):
+            text += ev.content
+            yield ("delta", ev.content)
+        elif isinstance(ev, StreamDone):
+            break
+    yield ("result", _parse_json(text))
+
+
+async def generate_quiz(api_key: str, analysis: dict, level: str) -> AsyncGenerator[tuple, None]:
+    """Genera un quiz completo (streaming)."""
     system = "Sei un esperto pedagogista italiano. Rispondi SOLO con JSON valido."
     prompt = f"""Genera un quiz completo sull'argomento "{analysis['topic']}" al livello: {level}.
 
@@ -145,17 +158,11 @@ Produci JSON:
 }}
 
 Genera 5 multiple_choice, 4 true_false, 3 open_questions, 6 flashcards. SOLO JSON."""
-    chat = _new_chat(api_key, f"quiz-{uuid.uuid4()}", system)
-    text = ""
-    async for ev in chat.stream_message(UserMessage(text=prompt)):
-        if isinstance(ev, TextDelta):
-            text += ev.content
-        elif isinstance(ev, StreamDone):
-            break
-    return _parse_json(text)
+    async for ev in _stream_json(api_key, f"quiz-{uuid.uuid4()}", system, prompt):
+        yield ev
 
 
-async def feynman_review(api_key: str, analysis: dict, user_explanation: str, level: str) -> dict:
+async def feynman_review(api_key: str, analysis: dict, user_explanation: str, level: str) -> AsyncGenerator[tuple, None]:
     system = "Sei un tutor esperto italiano che valuta con il metodo Feynman. Rispondi SOLO con JSON."
     prompt = f"""L'utente prova a spiegare l'argomento "{analysis['topic']}" con le sue parole.
 
@@ -175,17 +182,11 @@ Produci JSON:
 }}
 
 SOLO JSON."""
-    chat = _new_chat(api_key, f"feynman-{uuid.uuid4()}", system)
-    text = ""
-    async for ev in chat.stream_message(UserMessage(text=prompt)):
-        if isinstance(ev, TextDelta):
-            text += ev.content
-        elif isinstance(ev, StreamDone):
-            break
-    return _parse_json(text)
+    async for ev in _stream_json(api_key, f"feynman-{uuid.uuid4()}", system, prompt):
+        yield ev
 
 
-async def generate_study_plan(api_key: str, analysis: dict, comprehension: float, weak_topics: list) -> dict:
+async def generate_study_plan(api_key: str, analysis: dict, comprehension: float, weak_topics: list) -> AsyncGenerator[tuple, None]:
     system = "Sei un pianificatore didattico esperto. Rispondi SOLO con JSON."
     prompt = f"""Crea un piano di studio personalizzato.
 
@@ -214,9 +215,10 @@ SOLO JSON."""
     async for ev in chat.stream_message(UserMessage(text=prompt)):
         if isinstance(ev, TextDelta):
             text += ev.content
+            yield ("delta", ev.content)
         elif isinstance(ev, StreamDone):
             break
-    return _parse_json(text)
+    yield ("result", _parse_json(text))
 
 
 def _tutor_system(level: str, analysis: dict) -> str:

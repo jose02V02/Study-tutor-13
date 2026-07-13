@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, X, RotateCcw, Loader2, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function QuizPanel({ quiz, onComplete, onRegenerate }) {
+export default function QuizPanel({ quiz, onComplete, onRegenerate, progress = 0 }) {
   const [tab, setTab] = useState("mc");
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -13,6 +13,19 @@ export default function QuizPanel({ quiz, onComplete, onRegenerate }) {
       <div className="flex flex-col items-center py-12 text-center">
         <Loader2 className="animate-spin text-emerald-900 mb-3" />
         <div className="text-xs text-slate-500 font-mono uppercase tracking-widest">Generazione quiz…</div>
+        {progress > 0 && (
+          <>
+            <div className="mt-4 w-full bg-emerald-900/5 rounded-full h-1 overflow-hidden">
+              <div
+                className="h-full bg-emerald-800 transition-all duration-200"
+                style={{ width: `${Math.min(100, (progress / 2000) * 100)}%` }}
+              />
+            </div>
+            <div className="text-[10px] font-mono text-emerald-800/70 mt-2">
+              {progress} caratteri ricevuti
+            </div>
+          </>
+        )}
       </div>
     );
   }

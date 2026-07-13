@@ -79,8 +79,9 @@ export async function getDashboard() {
   return r.json();
 }
 
-// Stream SSE from GET (lesson intro)
-export async function streamSSE(url, { method = "GET", body = null } = {}, onDelta, onDone, onError) {
+// Stream SSE. Emits {delta}, {done:true, data?}, {error} events.
+// Callbacks: onDelta(text), onDone(), onError(msg), onData(finalData)
+export async function streamSSE(url, { method = "GET", body = null } = {}, onDelta, onDone, onError, onData) {
   const resp = await fetch(url, {
     method,
     headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -101,6 +102,7 @@ export async function streamSSE(url, { method = "GET", body = null } = {}, onDel
       try {
         const evt = JSON.parse(raw.slice(5).trim());
         if (evt.delta) onDelta && onDelta(evt.delta);
+        if (evt.data !== undefined) onData && onData(evt.data);
         if (evt.done) onDone && onDone();
         if (evt.error) onError && onError(evt.error);
       } catch { /* ignore malformed */ }

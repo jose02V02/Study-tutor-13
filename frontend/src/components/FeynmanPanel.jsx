@@ -5,15 +5,18 @@ export default function FeynmanPanel({ onSubmit, topic }) {
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const handle = async () => {
     if (!text.trim()) return;
     setLoading(true);
+    setProgress(0);
     try {
-      const r = await onSubmit(text);
+      const r = await onSubmit(text, (delta) => setProgress((p) => p + delta.length));
       setResult(r);
     } finally {
       setLoading(false);
+      setProgress(0);
     }
   };
 
@@ -41,6 +44,19 @@ export default function FeynmanPanel({ onSubmit, topic }) {
         {loading ? <Loader2 size={14} className="animate-spin" /> : <Award size={14} />}
         Valuta la mia spiegazione
       </button>
+      {loading && progress > 0 && (
+        <div className="mt-3">
+          <div className="w-full bg-emerald-900/5 rounded-full h-1 overflow-hidden">
+            <div
+              className="h-full bg-emerald-800 transition-all duration-200"
+              style={{ width: `${Math.min(100, (progress / 500) * 100)}%` }}
+            />
+          </div>
+          <div className="text-[10px] font-mono text-emerald-800/70 mt-1 text-center">
+            Il Maestro sta valutando… ({progress} caratteri)
+          </div>
+        </div>
+      )}
 
       {result && (
         <div className="mt-5 space-y-3">

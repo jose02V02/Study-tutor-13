@@ -40,6 +40,7 @@ export default function Classroom() {
   const [plan, setPlan] = useState(null);
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState([]);
+  const [streamingPanel, setStreamingPanel] = useState({ quiz: 0, plan: 0, feynman: 0 });
   const scrollRef = useRef(null);
   const startTimeRef = useRef(Date.now());
   const introStartedRef = useRef(false);
@@ -155,11 +156,14 @@ export default function Classroom() {
   const onGenerateQuiz = async () => {
     setRightTab("quiz");
     if (quiz) return;
-    toast("Generazione quiz in corso…");
+    setStreamingPanel((s) => ({ ...s, quiz: 0 }));
     try {
-      const q = await generateQuiz(sid);
+      const q = await generateQuiz(sid, (delta) => {
+        setStreamingPanel((s) => ({ ...s, quiz: s.quiz + delta.length }));
+      });
       setQuiz(q);
-    } catch (e) { toast.error("Errore quiz"); }
+    } catch (e) { toast.error(e.message || "Errore quiz"); }
+    finally { setStreamingPanel((s) => ({ ...s, quiz: 0 })); }
   };
 
   const onQuizComplete = async (score) => {
@@ -167,8 +171,11 @@ export default function Classroom() {
     toast.success(`Quiz: ${score}% comprensione`);
   };
 
-  const onFeynmanSubmit = async (explanation) => {
-    const result = await feynmanReview({ session_id: sid, explanation, level: session.level });
+  const onFeynmanSubmit = async (explanation, onDelta) => {
+    const result = await feynmanReview(
+      { session_id: sid, explanation, level: session.level },
+      onDelta,
+    );
     await updateProgress({ session_id: sid, comprehension: result.score, weak_topic: (result.missing || [])[0] });
     return result;
   };
@@ -176,10 +183,14 @@ export default function Classroom() {
   const onGeneratePlan = async () => {
     setRightTab("piano");
     if (plan) return;
+    setStreamingPanel((s) => ({ ...s, plan: 0 }));
     try {
-      const p = await getStudyPlan(sid);
+      const p = await getStudyPlan(sid, (delta) => {
+        setStreamingPanel((s) => ({ ...s, plan: s.plan + delta.length }));
+      });
       setPlan(p);
-    } catch (e) { toast.error("Errore piano"); }
+    } catch (e) { toast.error(e.message || "Errore piano"); }
+    finally { setStreamingPanel((s) => ({ ...s, plan: 0 })); }
   };
 
   const onAddNote = async () => {
@@ -367,9 +378,9 @@ export default function Classroom() {
                 transition={{ duration: 0.2 }}
               >
                 {rightTab === "mappa" && <MindMap data={analysis.mind_map} />}
-                {rightTab === "quiz" && <QuizPanel quiz={quiz} onComplete={onQuizComplete} onRegenerate={() => { setQuiz(null); onGenerateQuiz(); }} />}
+                {rightTab === "quiz" && <QuizPanel quiz={quiz} progress={streamingPanel.quiz} onComplete={onQuizComplete} onRegenerate={() => { setQuiz(null); onGenerateQuiz(); }} />}
                 {rightTab === "feynman" && <FeynmanPanel onSubmit={onFeynmanSubmit} topic={analysis.topic} />}
-                {rightTab === "piano" && <StudyPlanPanel plan={plan} />}
+                {rightTab === "piano" && <StudyPlanPanel plan={plan} progress={streamingPanel.plan} />}
                 {rightTab === "note" && (
                   <div className="space-y-3">
                     <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-emerald-800">Le mie note</div>

@@ -257,50 +257,81 @@ async def chat(req: ChatRequest):
 @api_router.post("/quiz/{sid}")
 async def quiz_generate(sid: str):
     session = await _get_session(sid)
-    try:
-        quiz = await generate_quiz(EMERGENT_LLM_KEY, session["analysis"], session["level"])
-    except Exception as e:
-        msg = str(e)
-        if "CONCURRENCY_REQUEST_LIMIT" in msg or "429" in msg:
-            raise HTTPException(429, "Troppe richieste. Riprova tra qualche secondo.")
-        raise HTTPException(500, f"Errore generazione quiz: {e}")
-    await db.sessions.update_one({"id": sid}, {"$set": {"quiz": quiz}})
-    return quiz
+
+    async def gen():
+        result = None
+        try:
+            async for kind, payload in generate_quiz(EMERGENT_LLM_KEY, session["analysis"], session["level"]):
+                if kind == "delta":
+                    yield f"data: {json.dumps({'delta': payload})}\n\n"
+                elif kind == "result":
+                    result = payload
+            if result is not None:
+                await db.sessions.update_one({"id": sid}, {"$set": {"quiz": result}})
+                yield f"data: {json.dumps({'done': True, 'data': result})}\n\n"
+        except Exception as e:
+            logger.exception("quiz error")
+            msg = str(e)
+            if "CONCURRENCY_REQUEST_LIMIT" in msg or "429" in msg:
+                yield f"data: {json.dumps({'error': 'Troppe richieste. Riprova tra qualche secondo.'})}\n\n"
+            else:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @api_router.post("/feynman")
 async def feynman(req: FeynmanRequest):
     session = await _get_session(req.session_id)
-    try:
-        result = await feynman_review(
-            EMERGENT_LLM_KEY, session["analysis"], req.explanation, req.level
-        )
-    except Exception as e:
-        msg = str(e)
-        if "CONCURRENCY_REQUEST_LIMIT" in msg or "429" in msg:
-            raise HTTPException(429, "Troppe richieste. Riprova tra qualche secondo.")
-        raise HTTPException(500, f"Errore Feynman: {e}")
-    return result
+
+    async def gen():
+        result = None
+        try:
+            async for kind, payload in feynman_review(EMERGENT_LLM_KEY, session["analysis"], req.explanation, req.level):
+                if kind == "delta":
+                    yield f"data: {json.dumps({'delta': payload})}\n\n"
+                elif kind == "result":
+                    result = payload
+            if result is not None:
+                yield f"data: {json.dumps({'done': True, 'data': result})}\n\n"
+        except Exception as e:
+            logger.exception("feynman error")
+            msg = str(e)
+            if "CONCURRENCY_REQUEST_LIMIT" in msg or "429" in msg:
+                yield f"data: {json.dumps({'error': 'Troppe richieste. Riprova tra qualche secondo.'})}\n\n"
+            else:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @api_router.get("/plan/{sid}")
 async def study_plan(sid: str):
     session = await _get_session(sid)
     p = session.get("progress", {})
-    try:
-        plan = await generate_study_plan(
-            EMERGENT_LLM_KEY,
-            session["analysis"],
-            p.get("comprehension", 0),
-            p.get("weak_topics", []),
-        )
-    except Exception as e:
-        msg = str(e)
-        if "CONCURRENCY_REQUEST_LIMIT" in msg or "429" in msg:
-            raise HTTPException(429, "Troppe richieste. Riprova tra qualche secondo.")
-        raise HTTPException(500, f"Errore piano: {e}")
-    await db.sessions.update_one({"id": sid}, {"$set": {"study_plan": plan}})
-    return plan
+
+    async def gen():
+        result = None
+        try:
+            async for kind, payload in generate_study_plan(
+                EMERGENT_LLM_KEY, session["analysis"], p.get("comprehension", 0), p.get("weak_topics", [])
+            ):
+                if kind == "delta":
+                    yield f"data: {json.dumps({'delta': payload})}\n\n"
+                elif kind == "result":
+                    result = payload
+            if result is not None:
+                await db.sessions.update_one({"id": sid}, {"$set": {"study_plan": result}})
+                yield f"data: {json.dumps({'done': True, 'data': result})}\n\n"
+        except Exception as e:
+            logger.exception("plan error")
+            msg = str(e)
+            if "CONCURRENCY_REQUEST_LIMIT" in msg or "429" in msg:
+                yield f"data: {json.dumps({'error': 'Troppe richieste. Riprova tra qualche secondo.'})}\n\n"
+            else:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @api_router.post("/progress")
