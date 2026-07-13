@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import Home from "@/pages/Home";
 import Classroom from "@/pages/Classroom";
 import Dashboard from "@/pages/Dashboard";
+import SharedLesson from "@/pages/SharedLesson";
 import InstallPrompt from "@/components/InstallPrompt";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { GraduationCap, LayoutDashboard, Sparkles } from "lucide-react";
@@ -19,7 +20,7 @@ function TopBar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (loc.pathname.startsWith("/aula/")) return null;
+  if (loc.pathname.startsWith("/aula/") || loc.pathname.startsWith("/l/")) return null;
 
   return (
     <header
@@ -79,6 +80,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/aula/:sid" element={<Classroom />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/l/:slug" element={<SharedLesson />} />
           </Routes>
           <Toaster
             position="top-center"

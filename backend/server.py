@@ -2,6 +2,8 @@
 import os
 import uuid
 import json
+import secrets
+import string
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -44,6 +46,11 @@ logger = logging.getLogger("study")
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _new_slug(n: int = 12) -> str:
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(n))
 
 
 # ==== MODELS ====
@@ -447,6 +454,57 @@ async def export_lesson(sid: str, fmt: str):
             "Cache-Control": "no-store",
         },
     )
+
+
+@api_router.post("/share/{sid}")
+async def enable_share(sid: str):
+    """Attiva la condivisione pubblica read-only. Idempotente."""
+    session = await _get_session(sid)
+    slug = session.get("share_slug")
+    if not slug:
+        # Ensure uniqueness
+        for _ in range(5):
+            candidate = _new_slug()
+            if not await db.sessions.find_one({"share_slug": candidate}):
+                slug = candidate
+                break
+        else:
+            slug = _new_slug(16)  # fallback longer
+        await db.sessions.update_one(
+            {"id": sid},
+            {"$set": {"share_slug": slug, "share_enabled_at": _now_iso()}},
+        )
+    return {"slug": slug, "enabled": True}
+
+
+@api_router.delete("/share/{sid}")
+async def disable_share(sid: str):
+    """Revoca la condivisione pubblica."""
+    await _get_session(sid)
+    await db.sessions.update_one(
+        {"id": sid},
+        {"$unset": {"share_slug": "", "share_enabled_at": ""}},
+    )
+    return {"enabled": False}
+
+
+@api_router.get("/public/lesson/{slug}")
+async def public_lesson(slug: str):
+    """Vista pubblica read-only. Espone solo dati sicuri (no note personali, no progresso)."""
+    doc = await db.sessions.find_one({"share_slug": slug}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Lezione non trovata o non condivisa")
+    # Return a whitelisted subset — no personal notes, no progress
+    return {
+        "title": doc.get("title"),
+        "level": doc.get("level"),
+        "analysis": doc.get("analysis"),
+        "messages": doc.get("messages", []),
+        "quiz": doc.get("quiz"),
+        "created_at": doc.get("created_at"),
+        "source_type": doc.get("source", {}).get("type"),
+        "source_title": doc.get("source", {}).get("title"),
+    }
 
 
 app.include_router(api_router)

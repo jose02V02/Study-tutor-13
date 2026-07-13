@@ -18,6 +18,7 @@ import FeynmanPanel from "@/components/FeynmanPanel";
 import StudyPlanPanel from "@/components/StudyPlanPanel";
 import HaiCapitoBar from "@/components/HaiCapitoBar";
 import ExportMenu from "@/components/ExportMenu";
+import ShareButton from "@/components/ShareButton";
 
 const RIGHT_TABS = [
   { key: "mappa", label: "Mappa", icon: MapIcon },
@@ -233,9 +234,11 @@ export default function Classroom() {
         <div className="hidden md:flex items-center gap-4 text-xs font-mono uppercase tracking-widest text-slate-600">
           <span>Cap. <span className="text-emerald-900 font-semibold">{activeChapter + 1}</span>/{analysis.chapters?.length || 0}</span>
           <span>Compr. <span className="text-emerald-900 font-semibold">{session.progress?.comprehension || 0}%</span></span>
+          <ShareButton sid={sid} initialSlug={session.share_slug} />
           <ExportMenu sid={sid} />
         </div>
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center gap-1.5">
+          <ShareButton sid={sid} initialSlug={session.share_slug} />
           <ExportMenu sid={sid} />
         </div>
       </div>

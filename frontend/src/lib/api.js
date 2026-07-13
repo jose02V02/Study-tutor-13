@@ -108,6 +108,21 @@ export function exportUrl(sid, fmt) {
   return `${API_BASE}/export/${sid}/${fmt}`;
 }
 
+export async function enableShare(sid) {
+  const r = await fetch(`${API_BASE}/share/${sid}`, { method: "POST" });
+  return safeJson(r, "Errore condivisione");
+}
+
+export async function disableShare(sid) {
+  const r = await fetch(`${API_BASE}/share/${sid}`, { method: "DELETE" });
+  return safeJson(r, "Errore");
+}
+
+export async function getPublicLesson(slug) {
+  const r = await fetch(`${API_BASE}/public/lesson/${slug}`);
+  return safeJson(r, "Lezione non trovata");
+}
+
 export async function downloadExport(sid, fmt) {
   const r = await fetch(exportUrl(sid, fmt));
   if (!r.ok) {
