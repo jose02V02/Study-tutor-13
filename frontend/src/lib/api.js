@@ -1,13 +1,22 @@
 export const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+async function safeJson(r, defaultMsg = "Errore server") {
+  const ct = r.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) {
+    throw new Error(r.status >= 500 ? "Server temporaneamente non disponibile. Riprova." : defaultMsg);
+  }
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.detail || defaultMsg);
+  return data;
+}
+
 export async function ingestUrl({ url, text, level }) {
   const r = await fetch(`${API_BASE}/ingest/url`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ url, text, level }),
   });
-  if (!r.ok) throw new Error((await r.json()).detail || "Errore ingestione");
-  return r.json();
+  return safeJson(r, "Errore ingestione");
 }
 
 export async function ingestFile(file, level) {
@@ -15,68 +24,96 @@ export async function ingestFile(file, level) {
   fd.append("file", file);
   fd.append("level", level);
   const r = await fetch(`${API_BASE}/ingest/file`, { method: "POST", body: fd });
-  if (!r.ok) throw new Error((await r.json()).detail || "Errore upload");
-  return r.json();
+  return safeJson(r, "Errore upload");
 }
 
 export async function getSession(sid) {
   const r = await fetch(`${API_BASE}/session/${sid}`);
-  if (!r.ok) throw new Error("Sessione non trovata");
-  return r.json();
+  return safeJson(r, "Sessione non trovata");
 }
 
 export async function listSessions() {
-  const r = await fetch(`${API_BASE}/sessions`);
-  return r.json();
+  try {
+    const r = await fetch(`${API_BASE}/sessions`);
+    return await safeJson(r);
+  } catch {
+    return { sessions: [] };
+  }
 }
 
 export async function deleteSession(sid) {
-  await fetch(`${API_BASE}/session/${sid}`, { method: "DELETE" });
+  try { await fetch(`${API_BASE}/session/${sid}`, { method: "DELETE" }); } catch {}
 }
 
-export async function generateQuiz(sid) {
-  const r = await fetch(`${API_BASE}/quiz/${sid}`, { method: "POST" });
-  if (!r.ok) throw new Error("Errore quiz");
-  return r.json();
+export async function generateQuiz(sid, onDelta) {
+  return await consumeSSEForData(`${API_BASE}/quiz/${sid}`, { method: "POST" }, onDelta);
 }
 
-export async function feynmanReview({ session_id, explanation, level }) {
-  const r = await fetch(`${API_BASE}/feynman`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ session_id, explanation, level }),
+export async function feynmanReview({ session_id, explanation, level }, onDelta) {
+  return await consumeSSEForData(
+    `${API_BASE}/feynman`,
+    { method: "POST", body: { session_id, explanation, level } },
+    onDelta,
+  );
+}
+
+export async function getStudyPlan(sid, onDelta) {
+  return await consumeSSEForData(`${API_BASE}/plan/${sid}`, { method: "GET" }, onDelta);
+}
+
+async function consumeSSEForData(url, opts, onDelta) {
+  return await new Promise((resolve, reject) => {
+    let finalData = null;
+    let errored = false;
+    streamSSE(
+      url,
+      opts,
+      (delta) => onDelta && onDelta(delta),
+      () => { if (!errored) resolve(finalData); },
+      (err) => { errored = true; reject(new Error(err)); },
+      (data) => { finalData = data; },
+    ).catch((e) => { errored = true; reject(e); });
   });
-  if (!r.ok) throw new Error("Errore Feynman");
-  return r.json();
-}
-
-export async function getStudyPlan(sid) {
-  const r = await fetch(`${API_BASE}/plan/${sid}`);
-  if (!r.ok) throw new Error("Errore piano");
-  return r.json();
 }
 
 export async function updateProgress(payload) {
-  const r = await fetch(`${API_BASE}/progress`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  return r.json();
+  try {
+    const r = await fetch(`${API_BASE}/progress`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return await safeJson(r);
+  } catch (e) {
+    console.warn("updateProgress failed:", e.message);
+    return null;
+  }
 }
 
 export async function addNote(session_id, text) {
-  const r = await fetch(`${API_BASE}/notes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ session_id, text }),
-  });
-  return r.json();
+  try {
+    const r = await fetch(`${API_BASE}/notes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id, text }),
+    });
+    return await safeJson(r);
+  } catch (e) {
+    console.warn("addNote failed:", e.message);
+    return null;
+  }
 }
 
 export async function getDashboard() {
-  const r = await fetch(`${API_BASE}/dashboard`);
-  return r.json();
+  try {
+    const r = await fetch(`${API_BASE}/dashboard`);
+    return await safeJson(r);
+  } catch {
+    return {
+      total_sessions: 0, total_minutes: 0, hours_studied: 0, chapters_completed: 0,
+      avg_comprehension: 0, level_name: "Novizio", weak_topics: [], understood_topics: [], recent_sessions: [],
+    };
+  }
 }
 
 // Stream SSE. Emits {delta}, {done:true, data?}, {error} events.

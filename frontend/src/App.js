@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import Classroom from "@/pages/Classroom";
 import Dashboard from "@/pages/Dashboard";
 import InstallPrompt from "@/components/InstallPrompt";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { GraduationCap, LayoutDashboard, Sparkles } from "lucide-react";
 
 function TopBar() {
@@ -71,21 +72,23 @@ function TopBar() {
 export default function App() {
   return (
     <div className="App min-h-screen bg-[#FDFBF7] grain">
-      <BrowserRouter>
-        <TopBar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/aula/:sid" element={<Classroom />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            style: { background: "#FDFBF7", color: "#0F172A", border: "1px solid rgba(15,23,42,0.12)" },
-          }}
-        />
-        <InstallPrompt />
-      </BrowserRouter>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <TopBar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/aula/:sid" element={<Classroom />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Routes>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: { background: "#FDFBF7", color: "#0F172A", border: "1px solid rgba(15,23,42,0.12)" },
+            }}
+          />
+          <InstallPrompt />
+        </BrowserRouter>
+      </ErrorBoundary>
     </div>
   );
 }

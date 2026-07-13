@@ -108,6 +108,16 @@ let webpackConfig = {
 };
 
 webpackConfig.devServer = (devServerConfig) => {
+  // Disable the intrusive fullscreen error overlay (we have a proper ErrorBoundary)
+  devServerConfig.client = {
+    ...(devServerConfig.client || {}),
+    overlay: {
+      errors: false,
+      warnings: false,
+      runtimeErrors: false,
+    },
+  };
+
   // Add health check endpoints if enabled
   if (config.enableHealthCheck && setupHealthEndpoints && healthPluginInstance) {
     const originalSetupMiddlewares = devServerConfig.setupMiddlewares;
