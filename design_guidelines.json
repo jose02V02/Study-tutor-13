@@ -1,0 +1,141 @@
+{
+  "theme": "hybrid_fullstack",
+  "language": "it",
+  "project_name": "inteligent STUDY",
+  "typography": {
+    "fonts": {
+      "heading": "EB Garamond",
+      "body": "Manrope",
+      "mono": "IBM Plex Mono"
+    },
+    "hierarchy": {
+      "h1": "text-5xl md:text-6xl lg:text-7xl font-heading tracking-tight text-deep-ink leading-none",
+      "h2": "text-3xl md:text-4xl lg:text-5xl font-heading tracking-tight text-deep-ink",
+      "h3": "text-xl md:text-2xl font-body font-bold text-deep-ink",
+      "body": "text-base font-body leading-relaxed text-deep-ink/80",
+      "overline": "text-xs font-mono uppercase tracking-[0.2em] text-emerald-700 font-semibold"
+    }
+  },
+  "colors": {
+    "light": {
+      "background": "#FDFBF7",
+      "surface": "#FFFFFF",
+      "surface_glass": "rgba(255, 255, 255, 0.75)",
+      "primary": "#065F46",
+      "primary_hover": "#044E39",
+      "primary_foreground": "#FFFFFF",
+      "secondary": "#B45309",
+      "secondary_foreground": "#FFFFFF",
+      "text_primary": "#0F172A",
+      "text_muted": "#475569",
+      "border": "rgba(15, 23, 42, 0.12)",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444"
+    },
+    "dark": {
+      "background": "#0F172A",
+      "surface": "#1E293B",
+      "surface_glass": "rgba(30, 41, 59, 0.75)",
+      "primary": "#10B981",
+      "primary_hover": "#34D399",
+      "primary_foreground": "#0F172A",
+      "secondary": "#D97706",
+      "secondary_foreground": "#0F172A",
+      "text_primary": "#FDFBF7",
+      "text_muted": "#94A3B8",
+      "border": "rgba(253, 251, 247, 0.12)",
+      "success": "#10B981",
+      "warning": "#F59E0B",
+      "error": "#EF4444"
+    }
+  },
+  "layouts": {
+    "homepage": {
+      "description": "Minimalist, central focus. The 'ONE BIG BAR' is the absolute hero. Generous spacing (p-12 to p-32).",
+      "rules": "Avoid cluttered navigation. Central layout with organic, earthy background (soft noise + warm cream). Center alignment is strictly for the main hero heading and input bar, left-align descriptive texts."
+    },
+    "classroom": {
+      "description": "Three-pane layout: Left Sidebar (20% - chapters/index), Center Main (55% - AI Tutor Chat & Lesson Content), Right Panel (25% - Mind Map, Notes, Quiz).",
+      "rules": "Use h-screen with overflow-hidden on the main container. Internal scroll per pane. Use 1px solid borders between panes to evoke a structured, 'academic editorial' workspace."
+    },
+    "dashboard": {
+      "description": "Bento Grid high-density mode for tracking study hours, level, comprehension %, and spaced repetition.",
+      "rules": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 with gap-6. Flat backgrounds, 1px subtle border, no heavy drop shadows. Utilize 'Optical Clarity' for headers."
+    }
+  },
+  "components": {
+    "one_big_bar": {
+      "description": "The main ingestion component on the homepage for links and files.",
+      "style": "Massive (h-16 to h-20), pill-shaped (rounded-full) or rounded-2xl. Deep tinted shadow (shadow-2xl shadow-emerald-900/10). Internal padding p-4 to p-6. Font size text-lg to text-xl. Must include an integrated dropdown for 'Spiegazione Level' (Child/High School/University/Expert)."
+    },
+    "chat_message": {
+      "description": "AI Tutor and User messages within the Virtual Classroom.",
+      "style": "AI (Tutor): Glassmorphism surface (bg-white/60 backdrop-blur-md border border-white/40) or soft cream. User (Feynman Mode): Solid Academic Emerald (bg-primary text-white)."
+    },
+    "hai_capito_modal": {
+      "description": "Active comprehension checkpoint ('Hai capito?').",
+      "style": "Centered dialog with backdrop-blur-xl bg-white/90. High contrast, distinct CTA buttons. Should feel like a supportive interruption."
+    },
+    "mind_map_node": {
+      "description": "Visualization of fundamental concepts.",
+      "style": "Neo-brutalist or delicate outline: border-2 border-emerald-800 rounded-lg p-3 bg-cream text-deep-ink text-sm font-semibold."
+    },
+    "quiz_card": {
+      "description": "Interactive flashcards or multiple-choice questions.",
+      "style": "Neumorphic tactile variant: mix soft ambient shadow with sharp 1px inner contrast border (border-black/5)."
+    }
+  },
+  "visual_enhancers": {
+    "textures": "Add a subtle CSS/SVG grain/noise filter over the main background to eliminate digital flatness.",
+    "shadows": "Ambient + Direct. Never use default generic Tailwind shadows for major elements; tint them with the primary hue (e.g., shadow-emerald-900/5).",
+    "borders": "Use 1px borders pervasively instead of heavy drop shadows to create a structured, academic paper feel (Grid Borders style)."
+  },
+  "motion": {
+    "hover": "Subtle -translate-y-0.5 and shadow expansion. Text color MUST contrast correctly on hover.",
+    "page_transitions": "Fade in and slide up via framer-motion.",
+    "marquee": "Use a slow-moving, elegant editorial ribbon at the bottom of the hero for supported formats (YouTube, PDF, Word, PowerPoint, EPUB, ecc.)."
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.unsplash.com/photo-1579097380689-4351e0a200ed?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwxfHxsaWJyYXJ5JTIwYXJjaGl0ZWN0dXJlJTIwd2FybSUyMGxpZ2h0fGVufDB8fHx8MTc4MzkyMTIyMnww&ixlib=rb-4.1.0&q=85",
+        "category": "hero_background",
+        "description": "Warm grand library. Use at very low opacity (10-15%) behind the main input bar or blended into the Warm Cream background to give an academic, historical feel."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1763098844932-7240ee8ff180?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHw0fHxzdHVkZW50JTIwc3R1ZHlpbmclMjB3YXJtJTIwYWVzdGhldGljfGVufDB8fHx8MTc4MzkyMTIyMnww&ixlib=rb-4.1.0&q=85",
+        "category": "marketing_context",
+        "description": "Books and glasses on a table by the window. Perfect for the 'Come Funziona / Metodo' section."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1678845536613-5cf0ec5245cd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMG1pbmQlMjBtYXAlMjBub2Rlc3xlbnwwfHx8fDE3ODM5MjEyMjJ8MA&ixlib=rb-4.1.0&q=85",
+        "category": "mind_map_placeholder",
+        "description": "Abstract network of dots. Use for dashboard hero or mind-map promotional feature section."
+      }
+    ]
+  },
+  "libraries": {
+    "icons": "lucide-react",
+    "motion": "framer-motion",
+    "components": "shadcn/ui (customized via tailwind classes)",
+    "charts": "recharts",
+    "notifications": "sonner"
+  },
+  "instructions_to_main_agent": [
+    "CRITICAL: You are building a pure .js (React+Vite) frontend. DO NOT USE TYPESCRIPT (.tsx/.ts). Write all components in .jsx or .js files.",
+    "Translate all UI copy to Italian (e.g., 'Carica un file o incolla un link', 'Hai capito?', 'Spiegami questo come se avessi 10 anni').",
+    "Implement the 'ONE BIG BAR' prominently on the Homepage. Do not hide it. Next to the input, include the Explanation Level selector (Bambino/Superiori/Universitario/Esperto).",
+    "For the Virtual Classroom, implement a responsive 3-column layout. Sidebar: chapters/progress. Middle: AI Chat/Feynman mode. Right: Mindmap/Notes/Quiz.",
+    "Do NOT use complete transparent backgrounds for dropdowns, modals, or sticky headers. Always use a solid background or glassmorphism (bg-white/90 + backdrop-blur-xl).",
+    "Add 'data-testid' to ALL interactive elements (buttons, inputs, dropdowns) based on role, e.g., data-testid='upload-input', data-testid='hai-capito-btn'."
+  ],
+  "universal_guidelines": [
+    "NEVER use generic purple gradients. Stick strictly to the 'Warm Cream + Deep Ink + Academic Emerald' palette. This is an Old Money Tech / Academic aesthetic.",
+    "DO NOT use Inter, Roboto, or standard sans-serif for headings. Use 'EB Garamond' (serif) to inject personality and academic authority.",
+    "Do NOT center align body text. Left-align for superior readability.",
+    "Spacing is luxury: Use 2-3x more padding than usual (e.g., p-8, p-12, gap-8).",
+    "Buttons should be elegant: rounded-full or rounded-md with crisp borders and subtle hover state (-translate-y-1 + shadow).",
+    "Use 'sonner' for toast notifications (e.g., spaced repetition reminders, 'Modalità Maestro attivata')."
+  ]
+}
