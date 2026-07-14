@@ -1,4 +1,4 @@
-export const API_BASE = `${process.env.REACT_APP_BACKEND_URL}/api`;
+export const API_BASE = `${import.meta.env.VITE_BACKEND_URL || ""}/api`;
 
 async function safeJson(r, defaultMsg = "Errore server") {
   const ct = r.headers.get("content-type") || "";
