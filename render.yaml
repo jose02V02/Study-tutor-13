@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: study-tutor-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn server:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: intelligent_study
+      - key: CORS_ORIGINS
+        value: "*"
