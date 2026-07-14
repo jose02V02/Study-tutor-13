@@ -389,7 +389,7 @@ export default function Classroom() {
               >
                 {rightTab === "mappa" && <MindMap data={analysis.mind_map} />}
                 {rightTab === "quiz" && <QuizPanel quiz={quiz} progress={streamingPanel.quiz} onComplete={onQuizComplete} onRegenerate={() => { setQuiz(null); onGenerateQuiz(); }} />}
-                {rightTab === "video" && <VideosPanel sid={sid} />}
+                {rightTab === "video" && <VideosPanel sid={sid} level={session.level} />}
                 {rightTab === "feynman" && <FeynmanPanel onSubmit={onFeynmanSubmit} topic={analysis.topic} />}
                 {rightTab === "piano" && <StudyPlanPanel plan={plan} progress={streamingPanel.plan} />}
                 {rightTab === "note" && (

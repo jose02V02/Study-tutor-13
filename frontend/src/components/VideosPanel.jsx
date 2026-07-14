@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PlayCircle, X, Youtube, Loader2, Sparkles } from "lucide-react";
+import { PlayCircle, X, Youtube, Loader2, Sparkles, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
-import { searchVideos, videosForLesson } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { searchVideos, videosForLesson, ingestUrl } from "@/lib/api";
 
-export default function VideosPanel({ sid, initialQuery = "" }) {
+export default function VideosPanel({ sid, initialQuery = "", level = "universitario" }) {
   const [query, setQuery] = useState(initialQuery);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -112,13 +113,32 @@ export default function VideosPanel({ sid, initialQuery = "" }) {
         ))}
       </div>
 
-      <VideoModal video={openVideo} onClose={() => setOpenVideo(null)} />
+      <VideoModal video={openVideo} onClose={() => setOpenVideo(null)} level={level} />
     </div>
   );
 }
 
-export function VideoModal({ video, onClose }) {
+export function VideoModal({ video, onClose, level = "universitario" }) {
+  const [transforming, setTransforming] = useState(false);
+  const navigate = useNavigate();
+
   if (!video) return null;
+
+  const transform = async () => {
+    setTransforming(true);
+    const tid = toast.loading("Il Maestro sta trascrivendo il video…", { duration: 60000 });
+    try {
+      const res = await ingestUrl({ url: video.url, level });
+      toast.success("Lezione creata!", { id: tid });
+      onClose();
+      navigate(`/aula/${res.session_id}`);
+    } catch (e) {
+      toast.error(e.message || "Impossibile trasformare il video", { id: tid });
+    } finally {
+      setTransforming(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {video && (
@@ -164,7 +184,7 @@ export function VideoModal({ video, onClose }) {
                   className="w-full h-full"
                 />
               </div>
-              <div className="px-4 py-3 flex items-center gap-3">
+              <div className="px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
                 <a
                   href={video.url}
                   target="_blank"
@@ -173,6 +193,18 @@ export function VideoModal({ video, onClose }) {
                 >
                   <Youtube size={13} /> Apri su YouTube
                 </a>
+                <button
+                  onClick={transform}
+                  disabled={transforming}
+                  data-testid="video-transform-btn"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-emerald-700 hover:bg-emerald-600 disabled:opacity-60 text-white text-xs font-medium transition-all hover:-translate-y-0.5 shadow-lg shadow-emerald-900/40"
+                >
+                  {transforming ? (
+                    <><Loader2 size={13} className="animate-spin" /> Trasformo…</>
+                  ) : (
+                    <><GraduationCap size={13} /> Trasforma in lezione</>
+                  )}
+                </button>
               </div>
             </div>
           </motion.div>
