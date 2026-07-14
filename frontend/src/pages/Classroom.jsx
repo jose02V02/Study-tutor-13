@@ -309,16 +309,22 @@ export default function Classroom() {
                   </button>
                 </div>
               )}
-              {messages.map((m, i) => (
-                <ChatBubble key={i} role={m.role} content={m.content} />
-              ))}
-              {streaming && streamBuf && (
-                <ChatBubble role="assistant" content={streamBuf} streaming />
-              )}
+              <AnimatePresence initial={false}>
+                {messages.map((m, i) => (
+                  <ChatBubble key={i} role={m.role} content={m.content} />
+                ))}
+                {streaming && streamBuf && (
+                  <ChatBubble key="stream" role="assistant" content={streamBuf} streaming />
+                )}
+              </AnimatePresence>
               {streaming && !streamBuf && (
-                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center gap-2 text-slate-500 text-sm"
+                >
                   <Loader2 size={14} className="animate-spin" /> Il Maestro sta preparando la lezione…
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
@@ -387,7 +393,7 @@ export default function Classroom() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
-                {rightTab === "mappa" && <MindMap data={analysis.mind_map} />}
+                {rightTab === "mappa" && <MindMap data={analysis.mind_map} sid={sid} />}
                 {rightTab === "quiz" && <QuizPanel quiz={quiz} progress={streamingPanel.quiz} onComplete={onQuizComplete} onRegenerate={() => { setQuiz(null); onGenerateQuiz(); }} />}
                 {rightTab === "video" && <VideosPanel sid={sid} level={session.level} />}
                 {rightTab === "feynman" && <FeynmanPanel onSubmit={onFeynmanSubmit} topic={analysis.topic} />}
@@ -434,15 +440,25 @@ export default function Classroom() {
 function ChatBubble({ role, content, streaming }) {
   if (role === "user") {
     return (
-      <div className="flex justify-end">
+      <motion.div
+        className="flex justify-end"
+        initial={{ opacity: 0, x: 20, scale: 0.97 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+      >
         <div className="max-w-[85%] bg-emerald-900 text-[#FDFBF7] rounded-2xl rounded-tr-md px-4 py-3 text-sm leading-relaxed shadow-sm">
           {content}
         </div>
-      </div>
+      </motion.div>
     );
   }
   return (
-    <div className="flex gap-3">
+    <motion.div
+      className="flex gap-3"
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 28 }}
+    >
       <div className="w-8 h-8 rounded-full bg-emerald-900 text-[#FDFBF7] grid place-items-center shrink-0 mt-1">
         <Sparkles size={14} />
       </div>
@@ -453,6 +469,6 @@ function ChatBubble({ role, content, streaming }) {
           dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
         />
       </div>
-    </div>
+    </motion.div>
   );
 }

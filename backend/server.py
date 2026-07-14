@@ -1,4 +1,4 @@
-"""inteligent STUDY - Backend FastAPI server."""
+"""inteligent STUDY - Backend FastAPI server (Google Gemini)."""
 import os
 import uuid
 import json
@@ -32,7 +32,7 @@ from ai_service import (
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-EMERGENT_LLM_KEY = os.environ["EMERGENT_LLM_KEY"]
+GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
 mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
@@ -148,7 +148,7 @@ async def ingest_url(req: IngestUrlRequest):
         raise HTTPException(400, "Contenuto estratto troppo corto o vuoto")
 
     try:
-        analysis = await analyze_content(EMERGENT_LLM_KEY, source["text"], source["title"])
+        analysis = await analyze_content(GEMINI_API_KEY, source["text"], source["title"])
     except Exception as e:
         logger.exception("analyze failed")
         msg = str(e)
@@ -164,7 +164,7 @@ async def ingest_url(req: IngestUrlRequest):
 async def ingest_file(file: UploadFile = File(...), level: str = Form("universitario")):
     data = await file.read()
     try:
-        source = extract_from_file(file.filename, data, EMERGENT_LLM_KEY)
+        source = extract_from_file(file.filename, data, GEMINI_API_KEY)
     except Exception as e:
         raise HTTPException(400, f"Estrazione file fallita: {e}")
 
@@ -172,7 +172,7 @@ async def ingest_file(file: UploadFile = File(...), level: str = Form("universit
         raise HTTPException(400, "Contenuto estratto troppo corto o vuoto")
 
     try:
-        analysis = await analyze_content(EMERGENT_LLM_KEY, source["text"], source["title"])
+        analysis = await analyze_content(GEMINI_API_KEY, source["text"], source["title"])
     except Exception as e:
         logger.exception("analyze failed")
         msg = str(e)
@@ -210,7 +210,7 @@ async def lesson_intro(sid: str):
     async def gen():
         buf = ""
         try:
-            async for chunk in generate_lesson_intro(EMERGENT_LLM_KEY, sid, session["analysis"], session["level"]):
+            async for chunk in generate_lesson_intro(GEMINI_API_KEY, sid, session["analysis"], session["level"]):
                 buf += chunk
                 yield f"data: {json.dumps({'delta': chunk})}\n\n"
             await db.sessions.update_one(
@@ -243,7 +243,7 @@ async def chat(req: ChatRequest):
         buf = ""
         try:
             async for chunk in tutor_reply(
-                EMERGENT_LLM_KEY, req.session_id, req.message, session["analysis"], req.level, history
+                GEMINI_API_KEY, req.session_id, req.message, session["analysis"], req.level, history
             ):
                 buf += chunk
                 yield f"data: {json.dumps({'delta': chunk})}\n\n"
@@ -270,7 +270,7 @@ async def quiz_generate(sid: str):
     async def gen():
         result = None
         try:
-            async for kind, payload in generate_quiz(EMERGENT_LLM_KEY, session["analysis"], session["level"]):
+            async for kind, payload in generate_quiz(GEMINI_API_KEY, session["analysis"], session["level"]):
                 if kind == "delta":
                     yield f"data: {json.dumps({'delta': payload})}\n\n"
                 elif kind == "result":
@@ -296,7 +296,7 @@ async def feynman(req: FeynmanRequest):
     async def gen():
         result = None
         try:
-            async for kind, payload in feynman_review(EMERGENT_LLM_KEY, session["analysis"], req.explanation, req.level):
+            async for kind, payload in feynman_review(GEMINI_API_KEY, session["analysis"], req.explanation, req.level):
                 if kind == "delta":
                     yield f"data: {json.dumps({'delta': payload})}\n\n"
                 elif kind == "result":
@@ -323,7 +323,7 @@ async def study_plan(sid: str):
         result = None
         try:
             async for kind, payload in generate_study_plan(
-                EMERGENT_LLM_KEY, session["analysis"], p.get("comprehension", 0), p.get("weak_topics", [])
+                GEMINI_API_KEY, session["analysis"], p.get("comprehension", 0), p.get("weak_topics", [])
             ):
                 if kind == "delta":
                     yield f"data: {json.dumps({'delta': payload})}\n\n"

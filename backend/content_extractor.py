@@ -16,7 +16,7 @@ import ebooklib
 from PIL import Image
 import pytesseract
 from youtube_transcript_api import YouTubeTranscriptApi
-from openai import OpenAI
+# openai/emergent import removed — audio transcription disabled
 
 
 def _yt_id(url: str) -> Optional[str]:
@@ -103,17 +103,9 @@ def extract_from_image(data: bytes) -> str:
 
 
 def extract_from_audio(data: bytes, filename: str, api_key: str) -> str:
-    """Trascrizione audio con OpenAI Whisper via Emergent LLM Key."""
-    client = OpenAI(api_key=api_key, base_url="https://integrations.emergentagent.com/llm")
-    with tempfile.NamedTemporaryFile(suffix=os.path.splitext(filename)[1] or ".mp3", delete=False) as f:
-        f.write(data)
-        path = f.name
-    try:
-        with open(path, "rb") as af:
-            resp = client.audio.transcriptions.create(model="whisper-1", file=af)
-        return resp.text
-    finally:
-        os.unlink(path)
+    """Audio transcription non disponibile in questa versione."""
+    raise ValueError("La trascrizione audio non è supportata. Carica un file PDF, DOCX, PPTX, EPUB o testo.")
+
 
 
 def extract_from_file(filename: str, data: bytes, api_key: str) -> dict:

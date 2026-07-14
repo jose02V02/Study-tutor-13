@@ -1,21 +1,18 @@
-"""AI service for inteligent STUDY - Claude Sonnet 4.5 via Emergent LLM Key."""
+"""AI service for inteligent STUDY - Google Gemini via google-genai SDK."""
 import json
 import re
 import uuid
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage, TextDelta, StreamDone
-
-
-CLAUDE_MODEL = "claude-sonnet-4-5-20250929"
+from google import genai
+from google.genai import types
 
 
-def _new_chat(api_key: str, session_id: str, system: str) -> LlmChat:
-    return LlmChat(
-        api_key=api_key,
-        session_id=session_id,
-        system_message=system,
-    ).with_model("anthropic", CLAUDE_MODEL)
+GEMINI_MODEL = "gemini-2.0-flash"
+
+
+def _client(api_key: str) -> genai.Client:
+    return genai.Client(api_key=api_key)
 
 
 LEVEL_INSTRUCTIONS = {
@@ -65,17 +62,22 @@ Contenuto:
 {content[:15000]}
 
 Rispondi SOLO con il JSON."""
-    chat = _new_chat(api_key, f"analyze-{uuid.uuid4()}", system)
-    text = ""
-    async for ev in chat.stream_message(UserMessage(text=prompt)):
-        if isinstance(ev, TextDelta):
-            text += ev.content
-        elif isinstance(ev, StreamDone):
-            break
-    return _parse_json(text)
+
+    client = _client(api_key)
+    response = await client.aio.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=system,
+            temperature=0.2,
+        ),
+    )
+    return _parse_json(response.text)
 
 
-async def generate_lesson_intro(api_key: str, session_id: str, analysis: dict, level: str) -> AsyncGenerator[str, None]:
+async def generate_lesson_intro(
+    api_key: str, session_id: str, analysis: dict, level: str
+) -> AsyncGenerator[str, None]:
     """Genera la prima lezione introduttiva (streaming)."""
     system = _tutor_system(level, analysis)
     prompt = f"""Inizia la prima lezione sul primo capitolo: "{analysis['chapters'][0]['title']}".
@@ -91,50 +93,71 @@ Struttura la spiegazione così:
 
 Alla fine, chiedi: "Hai capito? Rispondi Sì per continuare, No per una spiegazione diversa."
 Usa markdown. Sii chiaro e coinvolgente."""
-    chat = _new_chat(api_key, session_id, system)
-    async for ev in chat.stream_message(UserMessage(text=prompt)):
-        if isinstance(ev, TextDelta):
-            yield ev.content
-        elif isinstance(ev, StreamDone):
-            break
+
+    client = _client(api_key)
+    async for chunk in client.aio.models.generate_content_stream(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(system_instruction=system),
+    ):
+        if chunk.text:
+            yield chunk.text
 
 
-async def tutor_reply(api_key: str, session_id: str, user_message: str, analysis: dict, level: str, history: list) -> AsyncGenerator[str, None]:
+async def tutor_reply(
+    api_key: str,
+    session_id: str,
+    user_message: str,
+    analysis: dict,
+    level: str,
+    history: list,
+) -> AsyncGenerator[str, None]:
     """Risposta del tutor con contesto della conversazione."""
     system = _tutor_system(level, analysis)
-    # Recreate history in session
-    chat = _new_chat(api_key, session_id, system)
-    # Include compressed history in the prompt
     hist_text = ""
     for m in history[-8:]:
         role = "Utente" if m["role"] == "user" else "Tutor"
         hist_text += f"\n{role}: {m['content'][:800]}"
+
     prompt = f"""Cronologia recente:{hist_text}
 
 Nuovo messaggio dell'utente: {user_message}
 
 Rispondi come tutor esperto. Se l'utente dice che non ha capito, CAMBIA metodo: usa un'analogia diversa, un esempio nuovo, semplifica ulteriormente. Non ripetere le stesse parole. Alla fine di una spiegazione completa, chiedi "Hai capito?"."""
-    async for ev in chat.stream_message(UserMessage(text=prompt)):
-        if isinstance(ev, TextDelta):
-            yield ev.content
-        elif isinstance(ev, StreamDone):
-            break
+
+    client = _client(api_key)
+    async for chunk in client.aio.models.generate_content_stream(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(system_instruction=system),
+    ):
+        if chunk.text:
+            yield chunk.text
 
 
-async def _stream_json(api_key: str, session_id: str, system: str, prompt: str) -> AsyncGenerator[tuple, None]:
-    """Yields ('delta', chunk) events then a final ('result', parsed_dict) event."""
-    chat = _new_chat(api_key, session_id, system)
+async def _stream_json(
+    api_key: str, system: str, prompt: str
+) -> AsyncGenerator[tuple, None]:
+    """Yields ('delta', chunk) then ('result', parsed_dict)."""
+    client = _client(api_key)
     text = ""
-    async for ev in chat.stream_message(UserMessage(text=prompt)):
-        if isinstance(ev, TextDelta):
-            text += ev.content
-            yield ("delta", ev.content)
-        elif isinstance(ev, StreamDone):
-            break
+    async for chunk in client.aio.models.generate_content_stream(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=system,
+            temperature=0.1,
+        ),
+    ):
+        if chunk.text:
+            text += chunk.text
+            yield ("delta", chunk.text)
     yield ("result", _parse_json(text))
 
 
-async def generate_quiz(api_key: str, analysis: dict, level: str) -> AsyncGenerator[tuple, None]:
+async def generate_quiz(
+    api_key: str, analysis: dict, level: str
+) -> AsyncGenerator[tuple, None]:
     """Genera un quiz completo (streaming)."""
     system = "Sei un esperto pedagogista italiano. Rispondi SOLO con JSON valido."
     prompt = f"""Genera un quiz completo sull'argomento "{analysis['topic']}" al livello: {level}.
@@ -158,11 +181,13 @@ Produci JSON:
 }}
 
 Genera 5 multiple_choice, 4 true_false, 3 open_questions, 6 flashcards. SOLO JSON."""
-    async for ev in _stream_json(api_key, f"quiz-{uuid.uuid4()}", system, prompt):
+    async for ev in _stream_json(api_key, system, prompt):
         yield ev
 
 
-async def feynman_review(api_key: str, analysis: dict, user_explanation: str, level: str) -> AsyncGenerator[tuple, None]:
+async def feynman_review(
+    api_key: str, analysis: dict, user_explanation: str, level: str
+) -> AsyncGenerator[tuple, None]:
     system = "Sei un tutor esperto italiano che valuta con il metodo Feynman. Rispondi SOLO con JSON."
     prompt = f"""L'utente prova a spiegare l'argomento "{analysis['topic']}" con le sue parole.
 
@@ -182,11 +207,13 @@ Produci JSON:
 }}
 
 SOLO JSON."""
-    async for ev in _stream_json(api_key, f"feynman-{uuid.uuid4()}", system, prompt):
+    async for ev in _stream_json(api_key, system, prompt):
         yield ev
 
 
-async def generate_study_plan(api_key: str, analysis: dict, comprehension: float, weak_topics: list) -> AsyncGenerator[tuple, None]:
+async def generate_study_plan(
+    api_key: str, analysis: dict, comprehension: float, weak_topics: list
+) -> AsyncGenerator[tuple, None]:
     system = "Sei un pianificatore didattico esperto. Rispondi SOLO con JSON."
     prompt = f"""Crea un piano di studio personalizzato.
 
@@ -210,15 +237,8 @@ JSON:
 }}
 
 SOLO JSON."""
-    chat = _new_chat(api_key, f"plan-{uuid.uuid4()}", system)
-    text = ""
-    async for ev in chat.stream_message(UserMessage(text=prompt)):
-        if isinstance(ev, TextDelta):
-            text += ev.content
-            yield ("delta", ev.content)
-        elif isinstance(ev, StreamDone):
-            break
-    yield ("result", _parse_json(text))
+    async for ev in _stream_json(api_key, system, prompt):
+        yield ev
 
 
 def _tutor_system(level: str, analysis: dict) -> str:
@@ -253,6 +273,5 @@ def _parse_json(text: str) -> dict:
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        # Try to fix trailing commas
         fixed = re.sub(r",\s*([}\]])", r"\1", text)
         return json.loads(fixed)

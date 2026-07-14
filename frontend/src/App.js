@@ -8,6 +8,7 @@ import Classroom from "@/pages/Classroom";
 import Dashboard from "@/pages/Dashboard";
 import SharedLesson from "@/pages/SharedLesson";
 import Videos from "@/pages/Videos";
+import MindMapPage from "@/pages/MindMapPage";
 import InstallPrompt from "@/components/InstallPrompt";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { GraduationCap, LayoutDashboard, Sparkles, Video } from "lucide-react";
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="/aula/:sid" element={<Classroom />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/video" element={<Videos />} />
+            <Route path="/map/:sid" element={<MindMapPage />} />
             <Route path="/l/:slug" element={<SharedLesson />} />
           </Routes>
           <Toaster
