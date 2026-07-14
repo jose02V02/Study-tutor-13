@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Send, ArrowLeft, Loader2, Sparkles, Map as MapIcon, StickyNote,
   BookOpenCheck, Brain, ChevronRight, Check, X, RotateCcw, PlayCircle,
-  Target,
+  Target, Youtube,
 } from "lucide-react";
 import {
   getSession, generateQuiz, feynmanReview, getStudyPlan,
@@ -19,10 +19,12 @@ import StudyPlanPanel from "@/components/StudyPlanPanel";
 import HaiCapitoBar from "@/components/HaiCapitoBar";
 import ExportMenu from "@/components/ExportMenu";
 import ShareButton from "@/components/ShareButton";
+import VideosPanel from "@/components/VideosPanel";
 
 const RIGHT_TABS = [
   { key: "mappa", label: "Mappa", icon: MapIcon },
   { key: "quiz", label: "Quiz", icon: BookOpenCheck },
+  { key: "video", label: "Video", icon: Youtube },
   { key: "feynman", label: "Feynman", icon: Brain },
   { key: "piano", label: "Piano", icon: Target },
   { key: "note", label: "Note", icon: StickyNote },
@@ -387,6 +389,7 @@ export default function Classroom() {
               >
                 {rightTab === "mappa" && <MindMap data={analysis.mind_map} />}
                 {rightTab === "quiz" && <QuizPanel quiz={quiz} progress={streamingPanel.quiz} onComplete={onQuizComplete} onRegenerate={() => { setQuiz(null); onGenerateQuiz(); }} />}
+                {rightTab === "video" && <VideosPanel sid={sid} />}
                 {rightTab === "feynman" && <FeynmanPanel onSubmit={onFeynmanSubmit} topic={analysis.topic} />}
                 {rightTab === "piano" && <StudyPlanPanel plan={plan} progress={streamingPanel.plan} />}
                 {rightTab === "note" && (

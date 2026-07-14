@@ -108,6 +108,28 @@ export function exportUrl(sid, fmt) {
   return `${API_BASE}/export/${sid}/${fmt}`;
 }
 
+export async function getDashboard() {
+  try {
+    const r = await fetch(`${API_BASE}/dashboard`);
+    return await safeJson(r);
+  } catch {
+    return {
+      total_sessions: 0, total_minutes: 0, hours_studied: 0, chapters_completed: 0,
+      avg_comprehension: 0, level_name: "Novizio", weak_topics: [], understood_topics: [], recent_sessions: [],
+    };
+  }
+}
+
+export async function searchVideos(q, limit = 12) {
+  const r = await fetch(`${API_BASE}/videos/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+  return safeJson(r, "Ricerca video fallita");
+}
+
+export async function videosForLesson(sid) {
+  const r = await fetch(`${API_BASE}/videos/for-lesson/${sid}`);
+  return safeJson(r, "Errore video lezione");
+}
+
 export async function enableShare(sid) {
   const r = await fetch(`${API_BASE}/share/${sid}`, { method: "POST" });
   return safeJson(r, "Errore condivisione");
@@ -147,18 +169,6 @@ export async function downloadExport(sid, fmt) {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-export async function getDashboard() {
-  try {
-    const r = await fetch(`${API_BASE}/dashboard`);
-    return await safeJson(r);
-  } catch {
-    return {
-      total_sessions: 0, total_minutes: 0, hours_studied: 0, chapters_completed: 0,
-      avg_comprehension: 0, level_name: "Novizio", weak_topics: [], understood_topics: [], recent_sessions: [],
-    };
-  }
 }
 
 // Stream SSE. Emits {delta}, {done:true, data?}, {error} events.

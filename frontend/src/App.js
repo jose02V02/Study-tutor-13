@@ -7,9 +7,10 @@ import Home from "@/pages/Home";
 import Classroom from "@/pages/Classroom";
 import Dashboard from "@/pages/Dashboard";
 import SharedLesson from "@/pages/SharedLesson";
+import Videos from "@/pages/Videos";
 import InstallPrompt from "@/components/InstallPrompt";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { GraduationCap, LayoutDashboard, Sparkles } from "lucide-react";
+import { GraduationCap, LayoutDashboard, Sparkles, Video } from "lucide-react";
 
 function TopBar() {
   const loc = useLocation();
@@ -51,6 +52,13 @@ function TopBar() {
             Home
           </Link>
           <Link
+            to="/video"
+            data-testid="nav-videos"
+            className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-emerald-900 transition-colors flex items-center gap-1.5"
+          >
+            <Video size={15} /> Video
+          </Link>
+          <Link
             to="/dashboard"
             data-testid="nav-dashboard"
             className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-emerald-900 transition-colors flex items-center gap-1.5"
@@ -80,6 +88,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/aula/:sid" element={<Classroom />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/video" element={<Videos />} />
             <Route path="/l/:slug" element={<SharedLesson />} />
           </Routes>
           <Toaster

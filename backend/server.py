@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from content_extractor import extract_from_url, extract_from_file
 from exporter import export_session, FORMAT_CONFIG
+from youtube_search import YoutubeSearch
 from ai_service import (
     analyze_content,
     generate_lesson_intro,
@@ -454,6 +455,50 @@ async def export_lesson(sid: str, fmt: str):
             "Cache-Control": "no-store",
         },
     )
+
+
+@api_router.get("/videos/search")
+async def videos_search(q: str, limit: int = 12):
+    """Cerca video YouTube educativi. Nessuna API key richiesta."""
+    if not q or len(q.strip()) < 2:
+        raise HTTPException(400, "Query troppo corta")
+    try:
+        results = YoutubeSearch(q.strip(), max_results=min(limit, 20)).to_dict()
+    except Exception as e:
+        logger.exception("YT search failed")
+        raise HTTPException(502, f"Ricerca video non disponibile: {e}")
+    videos = []
+    for v in results:
+        vid = v.get("id")
+        if not vid:
+            continue
+        thumbs = v.get("thumbnails") or []
+        videos.append({
+            "id": vid,
+            "title": v.get("title", ""),
+            "channel": v.get("channel", ""),
+            "duration": v.get("duration", ""),
+            "views": v.get("views", ""),
+            "publish_time": v.get("publish_time", ""),
+            "thumbnail": thumbs[0] if thumbs else f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg",
+            "url": f"https://www.youtube.com/watch?v={vid}",
+            "embed_url": f"https://www.youtube.com/embed/{vid}",
+        })
+    return {"query": q, "count": len(videos), "videos": videos}
+
+
+@api_router.get("/videos/for-lesson/{sid}")
+async def videos_for_lesson(sid: str):
+    """Video correlati alla lezione: usa topic + concetti chiave come query."""
+    session = await _get_session(sid)
+    a = session.get("analysis", {}) or {}
+    topic = a.get("topic", session.get("title", ""))
+    concepts = [c.get("name", "") for c in (a.get("concepts") or [])[:2]]
+    query_parts = [topic] + concepts + ["lezione italiano"]
+    q = " ".join([p for p in query_parts if p]).strip()
+    if not q:
+        return {"query": "", "count": 0, "videos": []}
+    return await videos_search(q=q, limit=12)
 
 
 @api_router.post("/share/{sid}")

@@ -136,5 +136,7 @@ watchfiles==1.2.0
 websockets==16.0
 xlsxwriter==3.2.9
 yarl==1.24.2
+youtube-search==2.2.0
+youtube-search-python==1.6.6
 youtube-transcript-api==1.2.4
 zipp==4.1.0
