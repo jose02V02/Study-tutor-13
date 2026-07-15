@@ -70,7 +70,6 @@ Rispondi SOLO con il JSON."""
         config=types.GenerateContentConfig(
             system_instruction=system,
             temperature=0.2,
-            tools=[{"google_search": {}}],
         ),
     )
     return _parse_json(response.text)
