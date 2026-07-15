@@ -98,8 +98,7 @@ def extract_from_epub(data: bytes) -> str:
 
 
 def extract_from_image(data: bytes) -> str:
-    img = Image.open(io.BytesIO(data))
-    return pytesseract.image_to_string(img, lang="ita+eng")
+    raise ValueError("L'estrazione del testo dalle immagini non è supportata in questa versione (hosting su Vercel).")
 
 
 def extract_from_audio(data: bytes, filename: str, api_key: str) -> str:

@@ -1,0 +1,42 @@
+# ── Core framework ────────────────────────────────────────────────────────────
+fastapi==0.110.1
+uvicorn==0.25.0
+starlette==0.37.2
+python-multipart==0.0.32
+python-dotenv==1.2.2
+pydantic==2.13.4
+
+# ── Database ──────────────────────────────────────────────────────────────────
+motor==3.3.1
+pymongo==4.6.3
+dnspython==2.8.0
+
+# ── AI - Google Gemini (gratuito) ─────────────────────────────────────────────
+google-genai==2.10.0
+
+# ── HTTP & scraping ───────────────────────────────────────────────────────────
+httpx==0.28.1
+beautifulsoup4==4.15.0
+lxml==6.1.1
+requests==2.34.2
+
+# ── Content extraction (PDF, DOCX, PPTX, EPUB, immagini) ─────────────────────
+pypdf==6.14.2
+python-docx==1.2.0
+python-pptx==1.0.2
+EbookLib==0.20
+pillow==12.3.0
+pytesseract==0.3.13
+
+# ── YouTube ───────────────────────────────────────────────────────────────────
+youtube-search==2.2.0
+youtube-search-python==1.6.6
+youtube-transcript-api==1.2.4
+
+# ── Export (PDF, DOCX) ────────────────────────────────────────────────────────
+fpdf2==2.8.7
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+aiofiles==25.1.0
+anyio==4.14.1
+python-dateutil==2.9.0.post0
