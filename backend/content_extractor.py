@@ -15,9 +15,7 @@ from ebooklib import epub
 import ebooklib
 from PIL import Image
 import pytesseract
-from youtube_transcript_api import YouTubeTranscriptApi
-# openai/emergent import removed — audio transcription disabled
-
+import yt_dlp
 
 def _yt_id(url: str) -> Optional[str]:
     p = urlparse(url)
@@ -31,17 +29,39 @@ def _yt_id(url: str) -> Optional[str]:
             return m.group(2)
     return None
 
-
 def extract_from_youtube(url: str) -> dict:
     vid = _yt_id(url)
     if not vid:
         raise ValueError("URL YouTube non valido")
     try:
-        api = YouTubeTranscriptApi()
-        fetched = api.fetch(vid, languages=["it", "en", "es", "fr", "de", "pt"])
-        text = " ".join(s.text for s in fetched.snippets)
+        ydl_opts = {
+            'skip_download': True,
+            'writesubtitles': True,
+            'writeautomaticsub': True,
+            'subtitleslangs': ['it', 'en'],
+            'quiet': True,
+            'no_warnings': True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            subs = info.get('subtitles') or info.get('automatic_captions')
+            if not subs:
+                raise ValueError("Nessun sottotitolo disponibile per questo video")
+            
+            lang = 'it' if 'it' in subs else ('en' if 'en' in subs else list(subs.keys())[0])
+            track = next((t for t in subs[lang] if t['ext'] == 'json3'), subs[lang][0])
+            
+            with httpx.Client(follow_redirects=True, timeout=10.0) as c:
+                r = c.get(track['url'])
+                r.raise_for_status()
+                if 'json' in track['ext']:
+                    data = r.json()
+                    text = "".join([seg.get('utf8', '') for event in data.get('events', []) for seg in event.get('segs', [])])
+                    text = " ".join(text.split())
+                else:
+                    text = r.text
     except Exception as e:
-        text = f"ATTENZIONE: Estrazione diretta bloccata da YouTube. Cerca sul web informazioni, riassunti o il transcript del seguente video: {url}."
+        raise ValueError(f"Estrazione bloccata da YouTube: {e}")
     return {"text": text, "source_type": "youtube", "title": f"YouTube: {vid}"}
 
 

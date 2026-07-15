@@ -30,8 +30,7 @@ pytesseract==0.3.13
 
 # ── YouTube ───────────────────────────────────────────────────────────────────
 youtube-search==2.2.0
-youtube-search-python==1.6.6
-youtube-transcript-api==1.2.4
+yt-dlp==2024.7.9.4
 
 # ── Export (PDF, DOCX) ────────────────────────────────────────────────────────
 fpdf2==2.8.7
