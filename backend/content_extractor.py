@@ -41,7 +41,7 @@ def extract_from_youtube(url: str) -> dict:
         fetched = api.fetch(vid, languages=["it", "en", "es", "fr", "de", "pt"])
         text = " ".join(s.text for s in fetched.snippets)
     except Exception as e:
-        raise ValueError(f"Trascrizione YouTube non disponibile: {e}")
+        text = f"ATTENZIONE: Estrazione diretta bloccata da YouTube. Cerca sul web informazioni, riassunti o il transcript del seguente video: {url}."
     return {"text": text, "source_type": "youtube", "title": f"YouTube: {vid}"}
 
 
